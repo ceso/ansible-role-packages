@@ -1,0 +1,32 @@
+---
+# roles/ansible-role-packages/tasks/flatpak.yml
+
+- name: Add Flatpak remotes
+  community.general.flatpak_remote:
+    name: "{{ flatpak_remote.name }}"
+    flatpakrepo_url: "{{ flatpak_remote.url }}"
+    method: "{{ flatpak_remote.method | default('system') }}"
+    state: present
+  loop: "{{ packages_flatpak_remotes }}"
+  loop_control:
+    loop_var: "flatpak_remote"
+    label: "{{ flatpak_remote.name }}"
+  become: "{{ (flatpak_remote.method | default('system')) == 'system' }}"
+
+- name: (Un)install Flatpak applications
+  community.general.flatpak:
+    name: "{{ flatpak_pkg.name }}"
+    state: "{{ flatpak_pkg.state | default('present') }}"
+    method: "{{ flatpak_pkg.method | default('system') }}"
+    remote: "{{ flatpak_pkg.remote | default('flathub') }}"
+  loop: "{{ packages_flatpak }}"
+  loop_control:
+    loop_var: "flatpak_pkg"
+    label: "{{ flatpak_pkg.name }}"
+  become: "{{ (flatpak_pkg.method | default('system')) == 'system' }}"
+
+- name: Reload dbus-broker.service
+  ansible.builtin.systemd_service:
+    name: dbus-broker.service
+    state: reloaded
+  become: true

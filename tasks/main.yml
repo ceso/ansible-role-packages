@@ -1,0 +1,51 @@
+---
+# roles/ansible-role-packages/tasks/main.yml
+
+- name: Include variable merging from role defaults
+  ansible.builtin.include_tasks:
+    file: extra_vars_merge.yml
+    apply:
+      tags: always
+  tags: always
+
+- name: Include variable configuration
+  ansible.builtin.include_tasks:
+    file: variables.yml
+    apply:
+      tags: always
+  tags: always
+
+- name: Include OS native package manager
+  ansible.builtin.import_tasks:
+    file: os-pkgmanager.yml
+  when: packages_native | length > 0
+  tags: os-pkgmanager
+
+- name: Include Linux Homebrew installation tasks
+  ansible.builtin.import_tasks:
+    file: homebrew.yml
+  tags: homebrew
+
+- name: Include UV Python installation tasks
+  ansible.builtin.import_tasks:
+    file: python-uv.yml
+  when: packages_uv | length > 0
+  tags: python-uv
+
+- name: Include Flatpak installation tasks
+  ansible.builtin.import_tasks:
+    file: flatpak.yml
+  when: packages_flatpak_remotes | length > 0 or packages_flatpak | length > 0
+  tags: flatpak
+
+- name: Include AppImage installation tasks
+  ansible.builtin.import_tasks:
+    file: appimage.yml
+  when: packages_appimage | length > 0
+  tags: appimage
+
+- name: Include binary application installation tasks
+  ansible.builtin.import_tasks:
+    file: binary-app.yml
+  when: packages_binary | length > 0
+  tags: binary-app

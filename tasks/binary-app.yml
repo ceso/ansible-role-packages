@@ -1,0 +1,15 @@
+---
+# roles/ansible-role-packages/tasks/binary-app.yml
+
+- name: (Un)install binary apps
+  binaryapp:
+    name: "{{ binaryapp.name }}"
+    url: "{{ binaryapp.url | default(omit) }}"
+    binary: "{{ binaryapp.binary | default(omit) }}"
+    desktop: "{{ binaryapp.desktop | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ packages_binary }}"
+  loop_control:
+    loop_var: "binaryapp"
+    label: "{{ binaryapp.name }}"
+    

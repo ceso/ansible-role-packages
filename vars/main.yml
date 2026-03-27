@@ -1,0 +1,7 @@
+---
+# roles/ansible-role-packages/vars/main.yml
+
+__packages_brew_bin: "/home/linuxbrew/.linuxbrew/bin"
+__packages_local_bin: "{{ ansible_facts['user_dir'] }}/.local/bin"
+__packages_local_applications: "{{ ansible_facts['user_dir'] }}/.local/share/applications"
+__packages_local_icons: "{{ ansible_facts['user_dir'] }}/.local/share/icons"

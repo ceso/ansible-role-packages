@@ -1,0 +1,46 @@
+---
+# roles/ansible-role-packages/tasks/setup-RedHat.yml
+
+- name: Install YUM repo files (auto-detect .repo)
+  ansible.builtin.get_url:
+    url: "{{ yumrepo_file.RedHat.url }}"
+    dest: "/etc/yum.repos.d/{{ yumrepo_file.RedHat.url | basename }}"
+    mode: "0644"
+  loop: >-
+    {{
+      packages_repos
+      | selectattr('RedHat.url', 'defined')
+      | selectattr('RedHat.url', 'search', '\.repo$')
+      | list
+    }}
+  loop_control:
+    loop_var: "yumrepo_file"
+    label: "{{ yumrepo_file.name }}"
+  become: true
+
+- name: Configure YUM (DNF) repositories
+  ansible.builtin.yum_repository:
+    name: "{{ yumrepo.name }}"
+    description: "{{ yumrepo.name }}"
+    baseurl: "{{ yumrepo.RedHat.baseurl | default(omit) }}"
+    metalink: "{{ yumrepo.RedHat.metalink | default(omit) }}"
+    gpgkey: "{{ yumrepo.RedHat.gpgkey | default(omit) }}"
+    gpgcheck: "{{ yumrepo.RedHat.gpgcheck | default(true) }}"
+    repo_gpgcheck: "{{ yumrepo.RedHat.repo_gpgcheck | default(false) }}"
+    enabled: "{{ yumrepo.RedHat.enabled | default(true) }}"
+  loop: >-
+    {{
+      packages_repos
+      | selectattr('RedHat', 'defined')
+      | rejectattr('RedHat.url', 'defined')
+      | list
+    }}
+  loop_control:
+    loop_var: "yumrepo"
+    label: "{{ yumrepo.name }}"
+  become: true
+
+- name: Refresh DNF metadata
+  ansible.builtin.dnf:
+    update_cache: true
+  become: true

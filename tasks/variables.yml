@@ -1,0 +1,37 @@
+---
+# roles/ansible-role-packages/tasks/variables.yml
+
+- name: Define packages_brew_bin
+  ansible.builtin.set_fact:
+    packages_brew_bin: "{{ __packages_brew_bin }}"
+  when: packages_brew_bin is not defined
+
+- name: Define packages_local_bin
+  ansible.builtin.set_fact:
+    packages_local_bin: "{{ __packages_local_bin }}"
+  when: packages_local_bin is not defined
+
+- name: Define packages_local_applications
+  ansible.builtin.set_fact:
+    packages_local_applications: "{{ __packages_local_applications }}"
+  when: packages_local_applications is not defined
+
+- name: Define packages_local_icons
+  ansible.builtin.set_fact:
+    packages_local_icons: "{{ __packages_local_icons }}"
+  when: packages_local_icons is not defined
+
+- name: Define packages_uv_bin
+  ansible.builtin.set_fact:
+    packages_uv_bin: "{{ __packages_local_bin }}/uv"
+  when: packages_uv_bin is not defined
+
+- name: Resolve distro-specific package names
+  ansible.builtin.set_fact:
+    __packages_native_distro_resolved: >-
+      {{ packages_native_name_per_distro | dict2items
+         | selectattr('value.' ~ ansible_facts['os_family'], 'defined')
+         | map(attribute='value')
+         | map(attribute=ansible_facts['os_family'])
+         | map('community.general.dict_kv', 'name')
+         | list }}

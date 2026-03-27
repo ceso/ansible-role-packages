@@ -1,0 +1,56 @@
+---
+# roles/ansible-role-packages/tasks/extra_vars_merge.yml
+
+- name: Merge packages_repos with extra_packages_repos
+  ansible.builtin.set_fact:
+    packages_repos: >-
+      {{ (packages_repos | default([])) + (extra_packages_repos | default([])) }}
+  when: extra_packages_repos is defined and extra_packages_repos | length > 0
+
+- name: Merge packages_native_name_per_distro with extra_packages_native_name_per_distro
+  ansible.builtin.set_fact:
+    packages_native_name_per_distro: >-
+      {{ (packages_native_name_per_distro | default({})) | combine(extra_packages_native_name_per_distro | default({})) }}
+  when: extra_packages_native_name_per_distro is defined and extra_packages_native_name_per_distro | length > 0
+
+- name: Merge packages_native with extra_packages_native
+  ansible.builtin.set_fact:
+    packages_native: >-
+      {{ (packages_native | default([])) + (extra_packages_native | default([])) }}
+  when: extra_packages_native is defined and extra_packages_native | length > 0
+
+- name: Merge packages_homebrew_taps with extra_packages_homebrew_taps
+  ansible.builtin.set_fact:
+    packages_homebrew_taps: >-
+      {{ (packages_homebrew_taps | default([])) + (extra_packages_homebrew_taps | default([])) }}
+  when: extra_packages_homebrew_taps is defined and extra_packages_homebrew_taps | length > 0
+
+- name: Merge packages_homebrew with extra_packages_homebrew
+  ansible.builtin.set_fact:
+    packages_homebrew: >-
+      {{ (packages_homebrew | default([])) + (extra_packages_homebrew | default([])) }}
+  when: extra_packages_homebrew is defined and extra_packages_homebrew | length > 0
+
+- name: Merge packages_flatpak_remotes with extra_packages_flatpak_remotes
+  ansible.builtin.set_fact:
+    packages_flatpak_remotes: >-
+      {{ (packages_flatpak_remotes | default([])) + (extra_packages_flatpak_remotes | default([])) }}
+  when: extra_packages_flatpak_remotes is defined and extra_packages_flatpak_remotes | length > 0
+
+- name: Merge packages_flatpak with extra_packages_flatpak
+  ansible.builtin.set_fact:
+    packages_flatpak: >-
+      {{ (packages_flatpak | default([])) + (extra_packages_flatpak | default([])) }}
+  when: extra_packages_flatpak is defined and extra_packages_flatpak | length > 0
+
+- name: Merge packages_appimage with extra_packages_appimage
+  ansible.builtin.set_fact:
+    packages_appimage: >-
+      {{ (packages_appimage | default([])) + (extra_packages_appimage | default([])) }}
+  when: extra_packages_appimage is defined and extra_packages_appimage | length > 0
+
+- name: Merge packages_binary with extra_packages_binary
+  ansible.builtin.set_fact:
+    packages_binary: >-
+      {{ (packages_binary | default([])) + (extra_packages_binary | default([])) }}
+  when: extra_packages_binary is defined and extra_packages_binary | length > 0

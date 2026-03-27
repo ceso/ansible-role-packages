@@ -1,0 +1,14 @@
+---
+# roles/ansible-role-packages/tasks/appimage.yml
+
+- name: (Un)install AppImage applications
+  appimage:
+    name: "{{ appimage.name }}"
+    url: "{{ appimage.url }}"
+    state: "{{ appimage.state | default('present') }}"
+    args: "{{ appimage.args | default(omit) }}"
+  loop: "{{ packages_appimage }}"
+  loop_control:
+    loop_var: "appimage"
+    label: "{{ appimage.name }}"
+    

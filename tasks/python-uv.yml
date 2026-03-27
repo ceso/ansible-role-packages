@@ -1,0 +1,13 @@
+---
+# roles/ansible-role-packages/tasks/python-uv.yml
+
+- name: (Un)install uv tools
+  uv:
+    name: "{{ uv_pkg.name }}"
+    state: "{{ uv_pkg.state | default('present') }}"
+    with_packages: "{{ uv_pkg.with_packages | default(omit) }}"
+    executable: "{{ packages_uv_bin }}"
+  loop: "{{ packages_uv }}"
+  loop_control:
+    loop_var: "uv_pkg"
+    label: "{{ uv_pkg.name }}{{ ' (with: ' + (uv_pkg.with_packages | join(', ')) + ')' if uv_pkg.with_packages is defined else '' }}"

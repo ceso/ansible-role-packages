@@ -1,0 +1,21 @@
+---
+# roles/ansible-role-packages/tasks/homebrew.yml
+
+- name: Add Homebrew taps
+  community.general.homebrew_tap:
+    name: "{{ brew.tap }}"
+    path: "{{ packages_brew_bin }}"
+  loop: "{{ packages_homebrew_taps }}"
+  loop_control:
+    loop_var: "brew"
+    label: "{{ brew.tap }}"
+
+- name: (Un)install Homebrew packages
+  community.general.homebrew:
+    name: "{{ brew.name }}"
+    state: "{{ brew.state | default('present') }}"
+    path: "{{ packages_brew_bin }}"
+  loop: "{{ packages_homebrew_taps + packages_homebrew }}"
+  loop_control:
+    loop_var: "brew"
+    label: "{{ brew.name }}"

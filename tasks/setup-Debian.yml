@@ -1,0 +1,56 @@
+---
+# roles/ansible-role-packages/tasks/setup-Debian.yml
+
+- name: Remove externally (conflicting) managed sources files
+  ansible.builtin.file:
+    path: "{{ repo_file.Debian.replaces }}"
+    state: absent
+  loop: "{{ packages_repos | selectattr('Debian.replaces', 'defined') | list }}"
+  loop_control:
+    loop_var: "aptrepo_file"
+    label: "{{ repo_file.name }}"
+  become: true
+
+- name: Install APT repo files (auto-detect)
+  ansible.builtin.get_url:
+    url: "{{ aptrepo_file.Debian.url }}"
+    dest: "/etc/apt/sources.list.d/{{ aptrepo_file.Debian.url | basename }}"
+    mode: "0644"
+  loop: >-
+    {{
+      packages_repos
+      | selectattr('Debian.url', 'defined')
+      | selectattr('Debian.url', 'search', '\.(list|sources)$')
+      | list
+    }}
+  loop_control:
+    loop_var: "aptrepo_file"
+    label: "{{ aptrepo_file.name }}"
+  become: true
+
+- name: Add third-party repositories
+  ansible.builtin.deb822_repository:
+    name: "{{ aptrepo_deb822.name }}"
+    types: "{{ aptrepo_deb822.Debian.types }}"
+    uris: "{{ aptrepo_deb822.Debian.uris }}"
+    suites: "{{ aptrepo_deb822.Debian.suites }}"
+    components: "{{ aptrepo_deb822.Debian.components }}"
+    signed_by: "{{ aptrepo_deb822.Debian.signed_by }}"
+    state: present
+    enabled: true
+  loop: >-
+    {{
+      packages_repos
+      | selectattr('Debian', 'defined')
+      | rejectattr('Debian.url', 'defined')
+      | list
+    }}
+  loop_control:
+    loop_var: "aptrepo_deb822"
+    label: "{{ aptrepo_deb822.name }}"
+  become: true
+
+- name: Refresh APT package index
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
