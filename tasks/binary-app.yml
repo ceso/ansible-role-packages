@@ -5,9 +5,10 @@
   binaryapp:
     name: "{{ binaryapp.name }}"
     url: "{{ binaryapp.url | default(omit) }}"
+    checksum_url: "{{ binaryapp.checksum_url | default(omit) }}"
     binary: "{{ binaryapp.binary | default(omit) }}"
     desktop: "{{ binaryapp.desktop | default(omit) }}"
-    state: "{{ item.state | default('present') }}"
+    state: "{{ binaryapp.state | default('present') }}"
   loop: "{{ packages_binary }}"
   loop_control:
     loop_var: "binaryapp"

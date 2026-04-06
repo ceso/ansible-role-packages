@@ -1,5 +1,5 @@
 ---
-# roles/ansible-role-packages/tasks/setup-RedHat.yml
+# roles/ansible-role-packages/tasks/nativepkgs-RedHat.yml
 
 - name: Install YUM repo files (auto-detect .repo)
   ansible.builtin.get_url:
@@ -44,3 +44,14 @@
   ansible.builtin.dnf:
     update_cache: true
   become: true
+
+- name: (Un)install native packages
+  ansible.builtin.package:
+    name: "{{ package.name }}"
+    state: "{{ package.state | default('present') }}"
+  loop: "{{ packages_native }}"
+  loop_control:
+    loop_var: "package"
+    label: "{{ package.name }}"
+  become: true
+  when: not _packages_ostree_booted.stat.exists

@@ -1,35 +1,22 @@
 ---
-# roles/ansible-role-packages/tasks/os_pkgmanager.yml
+# roles/ansible-role-packages/tasks/os-pkgmanager.yml
 
-- name: Include Debian repository setup
+- name: Detect rpm-ostree system
+  ansible.builtin.stat:
+    path: /run/ostree-booted
+  register: _packages_ostree_booted
+
+- name: Include Debian native package management
   ansible.builtin.include_tasks:
-    file: setup-Debian.yml
+    file: nativepkgs-Debian.yml
   when: ansible_facts.os_family == 'Debian'
 
-- name: Include RedHat repository setup
+- name: Include RedHat native package management
   ansible.builtin.include_tasks:
-    file: setup-RedHat.yml
+    file: nativepkgs-RedHat.yml
   when: ansible_facts.os_family == 'RedHat'
 
-- name: (Un)install native packages
-  ansible.builtin.package:
-    name: "{{ package.name }}"
-    state: "{{ package.state | default('present') }}"
-  loop: "{{ packages_native }}"
-  loop_control:
-    loop_var: "package"
-    label: "{{ package.name }}"
-  become: true
-
-# Some packages (e.g. 1password) recreate legacy .list files on install
-# Clean them up using the replaces field
-- name: Remove legacy apt files recreated by packages
-  ansible.builtin.file:
-    path: "{{ apt_repofile.Debian.replaces }}"
-    state: absent
-  loop: "{{ packages_repos | selectattr('Debian.replaces', 'defined') | list }}"
-  loop_control:
-    loop_var: "apt_repofile"
-    label: "{{ apt_repofile.name }}"
-  become: true
-  when: ansible_facts.os_family == 'Debian'
+- name: Include rpm-ostree native package management
+  ansible.builtin.include_tasks:
+    file: nativepkgs-RpmOsTree.yml
+  when: _packages_ostree_booted.stat.exists

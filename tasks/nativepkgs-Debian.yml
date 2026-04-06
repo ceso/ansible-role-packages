@@ -1,14 +1,14 @@
 ---
-# roles/ansible-role-packages/tasks/setup-Debian.yml
+# roles/ansible-role-packages/tasks/nativepkgs-Debian.yml
 
 - name: Remove externally (conflicting) managed sources files
   ansible.builtin.file:
-    path: "{{ repo_file.Debian.replaces }}"
+    path: "{{ aptrepo_file.Debian.replaces }}"
     state: absent
   loop: "{{ packages_repos | selectattr('Debian.replaces', 'defined') | list }}"
   loop_control:
     loop_var: "aptrepo_file"
-    label: "{{ repo_file.name }}"
+    label: "{{ aptrepo_file.name }}"
   become: true
 
 - name: Install APT repo files (auto-detect)
@@ -53,4 +53,24 @@
 - name: Refresh APT package index
   ansible.builtin.apt:
     update_cache: true
+  become: true
+
+- name: (Un)install native packages
+  ansible.builtin.package:
+    name: "{{ package.name }}"
+    state: "{{ package.state | default('present') }}"
+  loop: "{{ packages_native }}"
+  loop_control:
+    loop_var: "package"
+    label: "{{ package.name }}"
+  become: true
+
+- name: Remove legacy apt files recreated by packages
+  ansible.builtin.file:
+    path: "{{ apt_repofile.Debian.replaces }}"
+    state: absent
+  loop: "{{ packages_repos | selectattr('Debian.replaces', 'defined') | list }}"
+  loop_control:
+    loop_var: "apt_repofile"
+    label: "{{ apt_repofile.name }}"
   become: true

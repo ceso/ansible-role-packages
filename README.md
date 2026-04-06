@@ -181,9 +181,6 @@ packages_appimage:
   - name: appimageupdatetool
     url: 
       https://github.com/AppImageCommunity/AppImageUpdate/releases/download/2.0.0-alpha-1-20251018/appimageupdatetool-x86_64.AppImage
-  - name: ghostty
-    url: 
-      https://github.com/pkgforge-dev/ghostty-appimage/releases/download/v1.3.1/Ghostty-1.3.1-x86_64.AppImage
 ```
 
 #### Example usage
@@ -191,7 +188,7 @@ packages_appimage:
 ```YAML
 packages_appimage:
   - name: ghostty
-    url: "https://github.com/pkgforge-dev/ghostty-appimage/releases/download/v1.3.1/Ghostty-1.3.1-x86_64.AppImage"
+    url: "https://github.com/AppImageCommunity/AppImageUpdate/releases/download/2.0.0-alpha-1-20251018/appimageupdatetool-x86_64.AppImage"
 ```
 
 ### packages_binary
@@ -212,6 +209,7 @@ packages_binary: []
 packages_binary:
   - name: winbox
     url: "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip"
+    checksum_url: "https://download.mikrotik.com/routeros/winbox/4.0.1/WinBox_Linux.zip.sha256"
     binary: WinBox
     desktop:
       display_name: WinBox
@@ -281,28 +279,29 @@ Packages installed via Homebrew from the default repository.
 
 ```YAML
 packages_homebrew:
+  - name: awscli
   - name: bat
-  - name: fish
   - name: bat-extras
   - name: btop
   - name: entr
   - name: eza
+  - name: fastfetch
   - name: fd
+  - name: fish
   - name: fzf
+  - name: go
+  - name: hexyl
   - name: jq
   - name: kubectx
+  - name: neovim
   - name: prek
-  - name: reuse
   - name: ripgrep
   - name: shellcheck
   - name: shfmt
   - name: tre-command
   - name: zellij
   - name: zoxide
-  - name: fastfetch
-  - name: awscli
-  - name: ansible
-  - name: ansible-lint
+  - name: reuse
 ```
 
 #### Example usage
@@ -348,15 +347,10 @@ Packages installed via the OS native package manager
 packages_native:
   - name: unzip
   - name: flatpak
-  - name: screen
-  - name: brave-browser
   - name: upower
-  - name: golang
-  - name: neovim
   - name: podman
-  - name: vlc
-  - name: hexyl
   - name: flameshot
+  - name: gtk4-layer-shell
 ```
 
 ### packages_native_name_per_distro
@@ -406,19 +400,7 @@ Extra third party repositories to be added by Linux OS flavour
 #### Default value
 
 ```YAML
-packages_repos:
-  - name: brave-browser
-    Debian:
-      types: [deb]
-      uris: https://brave-browser-apt-release.s3.brave.com/
-      suites: [stable]
-      components: [main]
-      signed_by: 
-        https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
-    RedHat:
-      baseurl: https://brave-browser-rpm-release.s3.brave.com/$basearch
-      gpgkey: https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
-      gpgcheck: true
+packages_repos: []
 ```
 
 #### Example usage
@@ -453,9 +435,6 @@ packages_uv:
     with_packages:
       - molecule-plugins[podman]
       - molecule-plugins[vagrant]
-  - name: ansible-doctor
-    with_packages:
-      - ansible-core
 ```
 
 #### Example usage

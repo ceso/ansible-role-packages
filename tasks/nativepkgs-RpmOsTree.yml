@@ -1,0 +1,40 @@
+---
+# roles/ansible-role-packages/tasks/nativepkgs-RpmOsTree.yml
+
+- name: Build rpm-ostree install list
+  ansible.builtin.set_fact:
+    _rpmostree_packages_to_install: >-
+      {{
+        (packages_native
+          | rejectattr('state', 'defined')
+          | map(attribute='name') | list)
+        +
+        (packages_native
+          | selectattr('state', 'defined')
+          | selectattr('state', 'equalto', 'present')
+          | map(attribute='name') | list)
+      }}
+
+- name: Install native packages via rpm-ostree (single transaction)
+  community.general.rpm_ostree_pkg:
+    name: "{{ _rpmostree_packages_to_install }}"
+    state: present
+  become: true
+  when: _rpmostree_packages_to_install | length > 0
+
+- name: Build rpm-ostree removal list
+  ansible.builtin.set_fact:
+    _rpmostree_packages_to_remove: >-
+      {{
+        packages_native
+        | selectattr('state', 'defined')
+        | selectattr('state', 'equalto', 'absent')
+        | map(attribute='name') | list
+      }}
+
+- name: Remove native packages via rpm-ostree
+  community.general.rpm_ostree_pkg:
+    name: "{{ _rpmostree_packages_to_remove }}"
+    state: absent
+  become: true
+  when: _rpmostree_packages_to_remove | length > 0

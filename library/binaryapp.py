@@ -49,6 +49,15 @@ options:
       - Filename of the binary inside the archive.
       - If not provided, O(name) is used.
     type: str
+  checksum_url:
+    description:
+      - URL to a checksum file for the archive.
+      - The hash algorithm is auto-detected from the hash length
+        (MD5, SHA1, SHA224, SHA256, SHA384, SHA512).
+      - Accepts both bare hashes and C(hash  filename) format.
+      - When provided, the downloaded archive is verified before extraction.
+        On mismatch the archive is deleted and the module fails.
+    type: str
   desktop:
     description:
       - Desktop entry options. When provided, a C(.desktop) file is created.
@@ -115,11 +124,82 @@ binary_path:
 """
 
 import glob
+import hashlib
 import os
+import re
 import shutil
 import tempfile
 
 from ansible.module_utils.basic import AnsibleModule
+
+
+# ── checksum verification ─────────────────────────────────────────────
+
+_HASH_ALGO_BY_LENGTH: dict[int, str] = {
+    32: "md5",
+    40: "sha1",
+    56: "sha224",
+    64: "sha256",
+    96: "sha384",
+    128: "sha512",
+}
+
+
+def _parse_checksum_file(content: str) -> str:
+    """Extract the hex hash from checksum file content.
+
+    Handles both bare hashes and 'hash  filename' / 'hash *filename' formats.
+    """
+    for line in content.strip().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        match = re.match(r"^([0-9a-fA-F]+)(?:\s+.+)?$", line)
+        if match:
+            return match.group(1).lower()
+    raise ValueError("No hex hash found in checksum file")
+
+
+def _detect_hash_algo(hex_hash: str) -> str:
+    """Detect hash algorithm from the length of the hex digest."""
+    algo = _HASH_ALGO_BY_LENGTH.get(len(hex_hash))
+    if algo is None:
+        raise ValueError(
+            "Cannot detect hash algorithm for digest length {0}".format(len(hex_hash))
+        )
+    return algo
+
+
+def _compute_file_hash(path: str, algo: str) -> str:
+    """Compute the hash of a file using the given algorithm."""
+    h = hashlib.new(algo)
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _verify_checksum(module: AnsibleModule, archive_path: str, checksum_url: str) -> None:
+    """Download checksum file, auto-detect algo, verify archive. Deletes and fails on mismatch."""
+    checksum_file = archive_path + ".checksum"
+    module.run_command(["curl", "-fsSL", "-o", checksum_file, checksum_url], check_rc=True)
+
+    try:
+        with open(checksum_file, "r") as f:
+            content = f.read()
+        expected = _parse_checksum_file(content)
+        algo = _detect_hash_algo(expected)
+        actual = _compute_file_hash(archive_path, algo)
+    finally:
+        os.remove(checksum_file)
+
+    if actual != expected:
+        os.remove(archive_path)
+        module.fail_json(
+            msg="Checksum verification failed ({algo}): expected {expected}, got {actual}".format(
+                algo=algo, expected=expected, actual=actual,
+            )
+        )
 
 
 # ── path helpers ──────────────────────────────────────────────────────
@@ -254,6 +334,7 @@ def _state_install(module: AnsibleModule, force: bool = False) -> tuple[bool, li
     name = module.params["name"]
     url = module.params["url"]
     binary = module.params.get("binary") or name
+    checksum_url = module.params.get("checksum_url")
     desktop = module.params.get("desktop")
 
     actions: list[str] = []
@@ -272,6 +353,10 @@ def _state_install(module: AnsibleModule, force: bool = False) -> tuple[bool, li
             archive = os.path.join(tmpdir, "archive")
             _download_archive(module, url, archive)
             actions.append("downloaded")
+
+            if checksum_url:
+                _verify_checksum(module, archive, checksum_url)
+                actions.append("checksum_verified")
 
             module.run_command(
                 ["bash", "-c", "cd {0} && unzip -qo archive || tar xf archive".format(tmpdir)],
@@ -366,6 +451,7 @@ def main() -> None:
             ),
             name=dict(type="str", required=True),
             url=dict(type="str"),
+            checksum_url=dict(type="str"),
             binary=dict(type="str"),
             desktop=dict(
                 type="dict",
