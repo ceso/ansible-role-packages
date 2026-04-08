@@ -50,7 +50,6 @@ packages_native_name_per_distro:
 
 # @var packages_native:type: list[dict]
 # @var packages_native:description: >
-# Packages installed via the OS native package manager
 # @end
 packages_native:
   - name: unzip
@@ -92,12 +91,15 @@ packages_homebrew:
   - name: eza
   - name: fastfetch
   - name: fd
+  - name: fuck
   - name: fish
   - name: fzf
   - name: go
   - name: hexyl
   - name: jq
   - name: kubectx
+  - name: kubectl
+  - name: helm
   - name: neovim
   - name: prek
   - name: ripgrep
